@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. AI Engine (Python)
+  ai-engine:
+    build: ./apps/ai-engine
+    ports:
+      - "8000:8000"
+    networks:
+      - aig-network
+
+  # 2. API Gateway (NestJS)
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile.prod
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:../database/dev.db
+      - AI_SERVICE_URL=http://ai-engine:8000
+    depends_on:
+      - ai-engine
+    volumes:
+      - ./packages/database:/app/packages/database # Persist SQLite for now
+    networks:
+      - aig-network
+
+  # 3. Web Portal (Next.js)
+  web-portal:
+    build:
+      context: .
+      dockerfile: ./apps/web-portal/Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: http://184.72.75.243:3000
+    ports:
+      - "3001:3000" # Map internal 3000 to external 3001
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3000 # Client side calls
+    networks:
+      - aig-network
+
+networks:
+  aig-network:
+    driver: bridge

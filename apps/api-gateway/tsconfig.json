@@ -1,0 +1,11 @@
+{
+  "extends": "@aig/ts-config/nest.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "target": "es2017"
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

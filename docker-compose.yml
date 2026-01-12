@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  ai-engine:
+    build: ./apps/ai-engine
+    ports:
+      - "8000:8000"
+    networks:
+      - aig-network
+
+networks:
+  aig-network:
+    driver: bridge

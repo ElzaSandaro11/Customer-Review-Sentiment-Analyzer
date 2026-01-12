@@ -1,0 +1,11 @@
+node_modules
+.git
+.next
+dist
+.turbo
+build
+out
+.DS_Store
+coverage
+.env*
+!.env.example
