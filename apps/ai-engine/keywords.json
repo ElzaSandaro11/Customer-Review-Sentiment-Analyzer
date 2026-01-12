@@ -1,0 +1,22 @@
+{
+  "positive_words": [
+    "good",
+    "great",
+    "amazing",
+    "excellent",
+    "love",
+    "fast",
+    "best",
+    "recommend"
+  ],
+  "negative_words": [
+    "bad",
+    "terrible",
+    "slow",
+    "rude",
+    "poor",
+    "hate",
+    "worst",
+    "avoid"
+  ]
+}

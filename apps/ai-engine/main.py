@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import random
+import json
 
 app = FastAPI(title="Sentiment Analyzer", version="1.0.0")
 
@@ -22,8 +23,16 @@ def analyze_sentiment(request: ReviewRequest):
     text = request.text.lower()
     
     # Simple Keyword Heuristics
-    positive_words = ["good", "great", "amazing", "excellent", "love", "fast", "best", "recommend"]
-    negative_words = ["bad", "terrible", "slow", "rude", "poor", "hate", "worst", "avoid"]
+    # Load keywords from config
+    try:
+        with open("keywords.json", "r") as f:
+            data = json.load(f)
+            positive_words = data.get("positive_words", [])
+            negative_words = data.get("negative_words", [])
+    except FileNotFoundError:
+        # Fallback if config is missing
+        positive_words = ["good", "great", "amazing", "excellent", "love"]
+        negative_words = ["bad", "terrible", "slow", "rude", "poor"]
     
     pos_score = 0.0
     neg_score = 0.0

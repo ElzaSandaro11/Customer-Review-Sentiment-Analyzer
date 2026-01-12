@@ -23,8 +23,15 @@ rm -rf apps/*/node_modules
 rm -rf packages/*/node_modules
 
 # 2. Build images (using caching if available)
-echo "🏗️  Building Docker images..."
-docker compose -f docker-compose.prod.yml build --no-cache
+# 2. Build images (Sequential to save RAM)
+echo "🏗️  Building AI Engine..."
+docker compose -f docker-compose.prod.yml build --no-cache ai-engine
+
+echo "🏗️  Building API Gateway..."
+docker compose -f docker-compose.prod.yml build --no-cache api-gateway
+
+echo "🏗️  Building Web Portal..."
+docker compose -f docker-compose.prod.yml build --no-cache web-portal
 
 # 3. Start services
 echo "⬆️  Starting services..."

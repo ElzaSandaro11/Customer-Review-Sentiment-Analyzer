@@ -8,6 +8,20 @@ services:
     networks:
       - aig-network
 
+  # 3. Web Portal (Next.js)
+  web-portal:
+    build:
+      context: .
+      dockerfile: ./apps/web-portal/Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    networks:
+      - aig-network
+
 networks:
   aig-network:
     driver: bridge
