@@ -11,9 +11,33 @@ datasource db {
 
 model Review {
   id         String   @id @default(uuid())
+  tenantId   String   @default("default-tenant") // Added default for migration safety, though should be passed
   text       String
   sentiment  String   // POSITIVE, NEGATIVE, NEUTRAL
   confidence Float
   scores     String   // JSON string of { positive, negative, neutral }
   createdAt  DateTime @default(now())
+
+  guardrailCheck GuardrailCheck?
+}
+
+model GuardrailCheck {
+  id             String   @id @default(uuid())
+  reviewId       String   @unique
+  review         Review   @relation(fields: [reviewId], references: [id])
+  overallVerdict String   // PASS, WARN, BLOCK
+  createdAt      DateTime @default(now())
+  
+  results        GuardrailResult[]
+}
+
+model GuardrailResult {
+  id           String         @id @default(uuid())
+  checkId      String
+  check        GuardrailCheck @relation(fields: [checkId], references: [id])
+  guardrailKey String         // pii, toxicity, etc
+  score        Float
+  verdict      String         // PASS, WARN, BLOCK
+  reason       String?        
+  detailsJson  String?        // Extra info if needed
 }

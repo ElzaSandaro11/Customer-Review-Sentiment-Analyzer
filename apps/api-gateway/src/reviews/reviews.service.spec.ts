@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewsService } from './reviews.service';
 import { HttpException } from '@nestjs/common';
+import { GuardrailsService } from '../guardrails/guardrails.service';
 import axios from 'axios';
 
 // Mock dependencies
@@ -21,16 +22,25 @@ jest.mock('@aig/database', () => {
 describe('ReviewsService', () => {
   let service: ReviewsService;
   let prismaMock: any;
+  let module: TestingModule;
+  let guardrailsService: GuardrailsService;
 
   beforeEach(async () => {
     // Reset mocks
     jest.clearAllMocks();
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [ReviewsService],
+    module = await Test.createTestingModule({
+      providers: [
+        ReviewsService,
+        {
+          provide: GuardrailsService,
+          useValue: { validate: jest.fn() },
+        }
+      ],
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
+    guardrailsService = module.get<GuardrailsService>(GuardrailsService);
     // Access the private prisma instance (cast to any for testing)
     prismaMock = (service as any).prisma;
   });
@@ -58,7 +68,8 @@ describe('ReviewsService', () => {
       (axios.post as jest.Mock).mockResolvedValue(aiResponse);
       prismaMock.review.create.mockResolvedValue(savedReview);
 
-      const result = await service.analyzeReview(text);
+      (guardrailsService.validate as jest.Mock).mockResolvedValue({ results: {} });
+      const result = await service.analyzeReview(text, 't1');
 
       expect(axios.post).toHaveBeenCalledWith('http://localhost:8000/analyze', { text });
       expect(prismaMock.review.create).toHaveBeenCalled();
@@ -70,7 +81,8 @@ describe('ReviewsService', () => {
     it('should throw HTTP exception if AI service fails', async () => {
       (axios.post as jest.Mock).mockRejectedValue(new Error('AI Service Down'));
 
-      await expect(service.analyzeReview('test')).rejects.toThrow(HttpException);
+      (guardrailsService.validate as jest.Mock).mockResolvedValue({ results: {} });
+      await expect(service.analyzeReview('test', 't1')).rejects.toThrow(HttpException);
     });
   });
 
@@ -86,10 +98,14 @@ describe('ReviewsService', () => {
 
       prismaMock.review.findMany.mockResolvedValue(dbReviews);
 
-      const result = await service.getReviews();
+      const result = await service.getReviews('t1');
 
       expect(result[0].scores).toEqual({ positive: 1 });
-      expect(prismaMock.review.findMany).toHaveBeenCalledWith({ orderBy: { createdAt: 'desc' } });
+      expect(prismaMock.review.findMany).toHaveBeenCalledWith({ 
+        where: { tenantId: 't1' },
+        orderBy: { createdAt: 'desc' },
+        include: { guardrailCheck: true }
+      });
     });
   });
 });

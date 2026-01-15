@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Headers, HttpException, Param } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { AnalyzeReviewDto } from './dto/analyze-review.dto';
 
@@ -8,8 +8,9 @@ export class AnalyzeController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async analyze(@Body() dto: AnalyzeReviewDto) {
-    return this.reviewsService.analyzeReview(dto.text);
+  async analyze(@Body() dto: AnalyzeReviewDto, @Headers('x-tenant-id') tenantId: string) {
+    if (!tenantId) throw new HttpException('x-tenant-id header is required', HttpStatus.BAD_REQUEST);
+    return this.reviewsService.analyzeReview(dto.text, tenantId, dto.guardrails);
   }
 }
 
@@ -18,7 +19,14 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Get()
-  async findAll() {
-    return this.reviewsService.getReviews();
+  async findAll(@Headers('x-tenant-id') tenantId: string) {
+    if (!tenantId) throw new HttpException('x-tenant-id header is required', HttpStatus.BAD_REQUEST);
+    return this.reviewsService.getReviews(tenantId);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Headers('x-tenant-id') tenantId: string) {
+    if (!tenantId) throw new HttpException('x-tenant-id header is required', HttpStatus.BAD_REQUEST);
+    return this.reviewsService.getReview(id, tenantId);
   }
 }
